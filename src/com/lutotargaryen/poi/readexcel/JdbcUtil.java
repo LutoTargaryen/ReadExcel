@@ -1,6 +1,7 @@
 package com.lutotargaryen.poi.readexcel;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,16 +20,6 @@ import java.util.Map;
  *
  */
 public class JdbcUtil {
-	/*//资源文件解析器
-	private final static PropertiesParser PARSER = PropertiesParser.newInstance();
-	//数据库连接驱动
-	final static String DRIVERCLASS = PARSER.getProperty("jdbc.driver_class");
-	//数据库连接url
-	final static String URL = PARSER.getProperty("jdbc.url");
-	//数据库连接用户名
-	final static String USERNAME = PARSER.getProperty("jdbc.username");
-	//数据库连接密码
-	final static String PASSWROD = PARSER.getProperty("jdbc.password");*/
 	
 	//数据库连接驱动
 	private static String DRIVERCLASS;
@@ -55,11 +46,12 @@ public class JdbcUtil {
 	 * 获取数据库连接的方法
 	 */
 	private static Connection getConnection(){
-		java.sql.Connection connection = null;
+		Connection connection = null;
 		try {
 			//加载数据库连接驱动
 			Class.forName(DRIVERCLASS);
 			connection = DriverManager.getConnection(URL, USERNAME, PASSWROD);
+			
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (SQLException e) {
@@ -231,6 +223,90 @@ public class JdbcUtil {
 		
 		return tableName;
 	}
-	
+	/**
+	 * 获取表中的列
+	 * @param tableName
+	 * @return
+	 */
+	static List<Map<String,Object>> getColumns(String tableName){
+		//查询的结果列表
+		List<Map<String,Object>> talbe = null;
+		//连接对象
+		Connection connection = null;
+		ResultSet resultSet = null;
+		try {
+			//获取连接
+			connection = getConnection();
+			DatabaseMetaData dbmd = connection.getMetaData();
+			resultSet = dbmd.getColumns(connection.getCatalog(),dbmd.getUserName(),tableName,null);
+		
+			if(resultSet != null){
+				//把reusltSet结果集转换为一张虚拟的表
+				ResultSetMetaData rsd = resultSet.getMetaData();
+				//获取该虚拟表中的列数
+				int columnCount = rsd.getColumnCount();
+				//实例化talbe
+				talbe = new ArrayList<>();
+				//将结果集中的类容存储到list列表中
+				//遍历result中的每一行
+				while(resultSet.next()){
+					//定义存储每一行数据的Map集合
+					Map<String,Object> row = new HashMap<>();
+					//遍历一行每一列
+					for(int i = 0;i<columnCount;i++){
+						//获取列名
+						String columnName = rsd.getColumnName(i+1);
+						//获取值
+						String columnValue = resultSet.getString(columnName);
+						//把列名和值存储到map集合
+						row.put(columnName, columnValue);
+					}
+					//把每一行的数据添加到table中
+					talbe.add(row);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			//在finally中释放资源
+			closeObject(resultSet,connection);
+		}
+		return talbe;
+	}
+	/**
+	 * 获取数据库中的所有表名
+	 * @return
+	 */
+	static List<String> getTable(){
+		//查询的结果列表
+		List<String> list = null;
+		//连接对象
+		Connection connection = null;
+		ResultSet resultSet = null;
+		try {
+			//获取连接
+			connection = getConnection();
+			DatabaseMetaData dbmd = connection.getMetaData();
+			resultSet = dbmd.getTables(connection.getCatalog(),dbmd.getUserName(),null,null);
+		
+			if(resultSet != null){
+				//实例化talbe
+				list = new ArrayList<>();
+				//将结果集中的类容存储到list列表中
+				//遍历result中的每一行
+				while(resultSet.next()){
+					//获取表名
+					String columnValue = resultSet.getString("TABLE_NAME");
+					list.add(columnValue);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			//在finally中释放资源
+			closeObject(resultSet,connection);
+		}
+		return list;
+	}
 
 }

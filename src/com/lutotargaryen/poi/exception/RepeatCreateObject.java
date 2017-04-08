@@ -1,6 +1,6 @@
 package com.lutotargaryen.poi.exception;
 
-public class RepeatCreateObject extends RuntimeException{
+public class RepeatCreateObject extends Exception{
 
 	/**
 	 * 
