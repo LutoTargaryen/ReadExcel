@@ -22,13 +22,13 @@ public class JdbcUtil {
 	/*//资源文件解析器
 	private final static PropertiesParser PARSER = PropertiesParser.newInstance();
 	//数据库连接驱动
-	protected final static String DRIVERCLASS = PARSER.getProperty("jdbc.driver_class");
+	final static String DRIVERCLASS = PARSER.getProperty("jdbc.driver_class");
 	//数据库连接url
-	protected final static String URL = PARSER.getProperty("jdbc.url");
+	final static String URL = PARSER.getProperty("jdbc.url");
 	//数据库连接用户名
-	protected final static String USERNAME = PARSER.getProperty("jdbc.username");
+	final static String USERNAME = PARSER.getProperty("jdbc.username");
 	//数据库连接密码
-	protected final static String PASSWROD = PARSER.getProperty("jdbc.password");*/
+	final static String PASSWROD = PARSER.getProperty("jdbc.password");*/
 	
 	//数据库连接驱动
 	private static String DRIVERCLASS;
@@ -39,16 +39,16 @@ public class JdbcUtil {
 	//数据库连接密码
 	private  static String PASSWROD;
 	
-	protected static void setDRIVERCLASS(String dRIVERCLASS) {
+	static void setDRIVERCLASS(String dRIVERCLASS) {
 		DRIVERCLASS = dRIVERCLASS;
 	}
-	protected static void setURL(String uRL) {
+	static void setURL(String uRL) {
 		URL = uRL;
 	}
-	protected static void setUSERNAME(String uSERNAME) {
+	static void setUSERNAME(String uSERNAME) {
 		USERNAME = uSERNAME;
 	}
-	protected static void setPASSWROD(String pASSWROD) {
+	static void setPASSWROD(String pASSWROD) {
 		PASSWROD = pASSWROD;
 	}
 	/**
@@ -121,7 +121,7 @@ public class JdbcUtil {
 	 * @param parameters	sql语句中需要的参数
 	 * @return	从数据库中查询出的结果集合
 	 */
-	protected static List<Map<String,Object>> executeQuery(String sql,Object...parameters){
+	static List<Map<String,Object>> executeQuery(String sql,Object...parameters){
 		//查询的结果列表
 		List<Map<String,Object>> talbe = null;
 		//连接对象
@@ -178,7 +178,7 @@ public class JdbcUtil {
 	 * @param parameters	sql语句中需要的参数
 	 * @return	SQL 数据操作语言 (DML) 语句的行数
 	 */
-	protected static int executeUpdate(String sql,Object...parameters){
+	static int executeUpdate(String sql,Object...parameters){
 		//SQL 数据操作语言 (DML) 语句的行数
 		int row = -1;
 		//创建连接对象
