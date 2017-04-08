@@ -1,4 +1,4 @@
-package com.lutotargaryen.readexcel.poi;
+package com.lutotargaryen.poi.readexcel;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -19,17 +19,38 @@ import java.util.Map;
  *
  */
 public class JdbcUtil {
-	//资源文件解析器
+	/*//资源文件解析器
 	private final static PropertiesParser PARSER = PropertiesParser.newInstance();
 	//数据库连接驱动
-	private final static String DRIVERCLASS = PARSER.getProperty("jdbc.driver_class");
+	protected final static String DRIVERCLASS = PARSER.getProperty("jdbc.driver_class");
 	//数据库连接url
-	private final static String URL = PARSER.getProperty("jdbc.url");
+	protected final static String URL = PARSER.getProperty("jdbc.url");
 	//数据库连接用户名
-	private final static String USERNAME = PARSER.getProperty("jdbc.username");
+	protected final static String USERNAME = PARSER.getProperty("jdbc.username");
 	//数据库连接密码
-	private final static String PASSWROD = PARSER.getProperty("jdbc.password");
+	protected final static String PASSWROD = PARSER.getProperty("jdbc.password");*/
 	
+	//数据库连接驱动
+	private static String DRIVERCLASS;
+	//数据库连接url
+	private static String URL;
+	//数据库连接用户名
+	private static String USERNAME;
+	//数据库连接密码
+	private  static String PASSWROD;
+	
+	protected static void setDRIVERCLASS(String dRIVERCLASS) {
+		DRIVERCLASS = dRIVERCLASS;
+	}
+	protected static void setURL(String uRL) {
+		URL = uRL;
+	}
+	protected static void setUSERNAME(String uSERNAME) {
+		USERNAME = uSERNAME;
+	}
+	protected static void setPASSWROD(String pASSWROD) {
+		PASSWROD = pASSWROD;
+	}
 	/**
 	 * 获取数据库连接的方法
 	 */
