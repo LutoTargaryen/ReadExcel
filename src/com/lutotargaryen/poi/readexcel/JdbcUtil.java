@@ -1,5 +1,6 @@
 package com.lutotargaryen.poi.readexcel;
 
+import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -19,8 +20,12 @@ import java.util.Map;
  * @author luto
  *
  */
-public class JdbcUtil {
+public class JdbcUtil implements Serializable{
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	//数据库连接驱动
 	private static String DRIVERCLASS;
 	//数据库连接url
@@ -100,70 +105,14 @@ public class JdbcUtil {
 		if(statement != null && parameters != null && parameters.length > 0){
 			try {
 				for(int i = 0;i < parameters.length;i++){
-					statement.setObject(i + 1, parameters[0]);
+					statement.setObject(i + 1, parameters[i]);
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-	/**
-	 * 执行DQL(数据库查询语句(select))方法
-	 * @param sql	sql语句
-	 * @param parameters	sql语句中需要的参数
-	 * @return	从数据库中查询出的结果集合
-	 */
-	static List<Map<String,Object>> executeQuery(String sql,Object...parameters){
-		//查询的结果列表
-		List<Map<String,Object>> talbe = null;
-		//连接对象
-		Connection connection = null;
-		//预处理对象
-		PreparedStatement statement = null;
-		//从数据库中查询出的结果集
-		ResultSet resultSet = null;
-		try {
-			//获取连接
-			connection = getConnection();
-			//创建预编译对象
-			statement = connection.prepareStatement(sql);
-			//设置参数
-			setParameter(statement, parameters);
-			//执行executeQuery方法,返回ResultSet结果集
-			resultSet = statement.executeQuery();
-			if(resultSet != null){
-				//把reusltSet结果集转换为一张虚拟的表
-				ResultSetMetaData rsd = resultSet.getMetaData();
-				//获取该虚拟表中的列数
-				int columnCount = rsd.getColumnCount();
-				//实例化talbe
-				talbe = new ArrayList<>();
-				//将结果集中的类容存储到list列表中
-				//遍历result中的每一行
-				while(resultSet.next()){
-					//定义存储每一行数据的Map集合
-					Map<String,Object> row = new HashMap<>();
-					//遍历一行每一列
-					for(int i = 0;i<columnCount;i++){
-						//获取列名
-						String columnName = rsd.getColumnName(i+1);
-						//获取值
-						String columnValue = resultSet.getString(columnName);
-						//把列名和值存储到map集合
-						row.put(columnName, columnValue);
-					}
-					//把每一行的数据添加到table中
-					talbe.add(row);
-				}
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			//在finally中释放资源
-			closeObject(resultSet,statement,connection);
-		}
-		return talbe;
-	}
+	
 	/**
 	 * 执行DML(数据库操纵语句(update,delect,insert))
 	 * @param sql	sql语句

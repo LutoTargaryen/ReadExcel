@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -18,18 +20,36 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.lutotargaryen.poi.exception.RepeatCreateObject;
 
-public class ReadExcel {
+public class ReadExcel implements Serializable{
 
-	//返回状态
-	//无效的文件路径
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	/**
+	 * 返回状态 无效的文件路径
+	 */
 	public static final int INVALIDFILEPATH = -1;
-	//文件类型错误
+	/**
+	 * 返回状态 文件类型错误
+	 */
 	public static final int FILETYPEERROR = -2;
-	//列名不一致
-	public static final int COLUMNINCONSISTENCY = -3;
-	//数据库中没有相对应的表
+	/**
+	 * 返回状态 数据库中没有相对应的表
+	 */
 	public static final int HAVENOTABLE = -4;
-		
+	/**
+	 * 返回状态 数据库中列名和excel表中列名不一致
+	 */
+	public static final int COLUMNINCONSISTENCY = -3;
+	/**
+	 * 返回状态 excel中数据类型和数据库中的数据类型不一致
+	 */
+	public static final int DATATYPEERROR = -5;
+	/**
+	 * 返回状态 导入成功
+	 */
+	public static final int SUCCESS = 1;
 	
 	//文件类型
 	private String fileType;
@@ -43,9 +63,8 @@ public class ReadExcel {
 	private Integer numOfSheets;
 	//数据库中是否存在excel文件名的表，默认不存在
 	private boolean isExist;
-	//是否创建表，默认为false，如果设置为true，则数据中没有excel文件名的表时
-	//创建一个以excel文件名为表名的表（字段类型为varchar）
-	//private boolean isCreat;
+	//列名与其数据类型的集合
+	private Map<String,String> filedType = new HashMap<>();
 	
 
 	// 使用volatile关键字保证多线程访问时readExcel的可见性
@@ -56,7 +75,7 @@ public class ReadExcel {
 	 * @param Driver 数据库驱动类路径
 	 * @param DBUrl 数据库连接url
 	 * @return
-	 * @throws RepeatCreateObject 
+	 * @throws RepeatCreateObject 对象重复创建异常
 	 */
 	public static ReadExcel newInstance(String Driver,String DBUrl) throws RepeatCreateObject{
 		if(readExcel == null){
@@ -151,9 +170,41 @@ public class ReadExcel {
 				boolean isConsistent = getConsistent(excelFileds,DBFileds);
 				
 				if(isConsistent){
+					//拼接sql插入语句
+					StringBuffer sql = new StringBuffer("INSERT INTO ");
+					sql.append(fileName + "(");
+					sql.append(getArrays(excelFileds));
+					sql.append(") VALUES (");
+					for(int i = 0;i<excelFileds.size();i++){
+						sql.append("?");
+						if(i+1 < excelFileds.size()){
+							sql.append(",");
+						}
+					}
+					sql.append(")");
+					System.out.println(sql.toString());
+					int result = 0;
+					//循环sheet中的每一行，获取
+					for(int i = 1;i<=sheet.getLastRowNum();i++){
+						//获取每一行的数据
+						Object[] r = null;
+						try {
+							r = getRow(sheet,i,sheet.getRow(0).getLastCellNum());
+						} catch (Exception e) {
+							//数据类型不对
+							return DATATYPEERROR;
+						}
+						int res = JdbcUtil.executeUpdate(sql.toString(), r);
+						if(res > 0){
+							result ++;
+						}
+					}
+					if(result == sheet.getLastRowNum()){
+						//导入成功
+						return SUCCESS;
+					}
 					
 				}else{
-					System.out.println("列名不一致");
 					return COLUMNINCONSISTENCY;
 				}
 			}
@@ -164,7 +215,60 @@ public class ReadExcel {
 		}
 		return 0;
 	}
-	
+	/**
+	 * 获取每一行的数据
+	 * @param sheet	
+	 * @param i 第几行
+	 * @param num 列的数量
+	 * @return
+	 * @throws Exception 
+	 */
+	private Object[] getRow(Sheet sheet,int i, int num) throws Exception{
+		List<Object> rows = new ArrayList<>();
+		Row r = sheet.getRow(i);
+		for(int j = 0;j<num;j++){
+			//判断是否为空列，如果是，跳出本次循环
+			Cell cell = sheet.getRow(0).getCell(j);
+			if(cell == null ){
+				continue;
+			}
+			//获取该列在数据库中的类型
+			String fType = filedType.get(cell.toString());
+			Object field = null;
+			//根据类型转换为相应的类型
+			if(fType.equalsIgnoreCase("int")){
+				Double d = Double.valueOf(r.getCell(j).toString());
+				field = d.intValue();
+			}else if(fType.equalsIgnoreCase("double") ){
+				Double d = Double.valueOf(r.getCell(j).toString());
+				field =d;
+			}else if(fType.equalsIgnoreCase("float")){
+				Double d = Double.valueOf(r.getCell(j).toString());
+				field =d.floatValue();
+			}else if(fType.equalsIgnoreCase("date")){
+				field = DateUtil.StringToDate(r.getCell(j).toString());
+			}else{
+				field = String.valueOf(r.getCell(j));
+			}
+			rows.add(field);
+		}
+		return rows.toArray(new Object[rows.size()]);
+	}
+	/**
+	 * 
+	 * @param list
+	 * @return
+	 */
+	private String getArrays(List<String> list) {
+		StringBuffer sb = new StringBuffer();
+		for(int i = 0;i<list.size();i++){
+			sb.append(list.get(i));
+			if(i+1 < list.size()){
+				sb.append(",");
+			}
+		}
+		return sb.toString();
+	}
 	/**
 	 * 判断数据库中的字段是否和excel表中的字段一致
 	 * @param excelFileds
@@ -172,13 +276,27 @@ public class ReadExcel {
 	 * @return
 	 */
 	private boolean getConsistent(List<String> excelFileds, List<Map<String, Object>> DBFileds) {
-		for(Map<String,Object> map : DBFileds){
-			System.out.println(map);
-		}
 		if(excelFileds.size() != DBFileds.size()){
 			return false;
 		}
-		return false;
+		boolean t = false;
+		for (Map<String, Object> map : DBFileds) {
+			String DBFiled = (String) map.get("COLUMN_NAME");
+			for(String excelFiled : excelFileds){
+				if(excelFiled.trim().equalsIgnoreCase(DBFiled)){
+					//把列名还有该列名的数据类型存储到map集合中
+					filedType.put(excelFiled, (String)map.get("TYPE_NAME"));
+					t = true;
+					break;
+				}else{
+					t = false;
+				}
+			}
+		}
+		if(!t){
+			return false;
+		}
+		return true;
 	}
 	/**
 	 * 获取文件名
@@ -220,7 +338,7 @@ public class ReadExcel {
 		return workBook;
 	}
 	/**
-     * 获取excel表中的字段
+     * 获取excel表中的列名
      * @param hssfSheet HSSFSheet对象(excel中的sheet)
      * @return
      */
