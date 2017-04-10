@@ -93,7 +93,7 @@ public class JdbcUtil implements Serializable{
 	 * @param parameters	sql语句中需要的参数
 	 * @return	SQL 数据操作语言 (DML) 语句的行数
 	 */
-	static int executeUpdate(String sql,Object...parameters){
+	static int executeUpdate(String sql,List<Object[]> parameters){
 		//SQL 数据操作语言 (DML) 语句的行数
 		int row = -1;
 		//创建连接对象
@@ -106,9 +106,14 @@ public class JdbcUtil implements Serializable{
 			//创建预编译对象
 			statement = connection.prepareStatement(sql);
 			//设置参数
-			setParameter(statement, parameters);
-			//执行预编译对象
-			row = statement.executeUpdate();
+			for (Object[] objects : parameters) {
+				setParameter(statement, objects);
+				//添加到批处理集合
+				statement.addBatch();
+			}
+			//执行批处理集合
+			row = statement.executeBatch().length;
+			
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {

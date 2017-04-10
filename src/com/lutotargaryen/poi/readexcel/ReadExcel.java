@@ -154,28 +154,27 @@ public class ReadExcel implements Serializable{
 						}
 					}
 					sql.append(")");
-					System.out.println(sql.toString());
-					int result = 0;
-					//循环sheet中的每一行，获取
+					//循环sheet中的每一行
+					List<Object[]> list = new ArrayList<>();
 					for(int i = 1;i<=sheet.getLastRowNum();i++){
 						//获取每一行的数据
 						Object[] r = null;
+						
 						try {
 							r = getRow(sheet,i,sheet.getRow(0).getLastCellNum());
 						} catch (Exception e) {
 							//数据类型不对
 							return DATATYPEERROR;
 						}
-						int res = JdbcUtil.executeUpdate(sql.toString(), r);
-						if(res > 0){
-							result ++;
-						}
+						list.add(r);
 					}
-					if(result == sheet.getLastRowNum()){
+					
+					int res = JdbcUtil.executeUpdate(sql.toString(), list);
+					System.out.println(res == sheet.getLastRowNum());
+					if(res == sheet.getLastRowNum()){
 						//导入成功
 						return SUCCESS;
 					}
-					
 				}else{
 					return COLUMNINCONSISTENCY;
 				}
@@ -210,6 +209,9 @@ public class ReadExcel implements Serializable{
 			//根据类型转换为相应的类型
 			if(fType.equalsIgnoreCase("int")){
 				Double d = Double.valueOf(r.getCell(j).toString());
+				if(d * 10 > d.intValue() * 10){
+					throw new Exception();
+				}
 				field = d.intValue();
 			}else if(fType.equalsIgnoreCase("double") ){
 				Double d = Double.valueOf(r.getCell(j).toString());

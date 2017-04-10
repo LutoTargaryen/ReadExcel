@@ -14,7 +14,6 @@ public class Test {
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
 			Connection connection = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/readexcel?userUnicode=true&characterEncoding=UTF-8","root","root");
-			System.out.println("Test connection : " + connection);
 			ReadExcel readExcel = ReadExcel.newInstance(connection);
 			int i = readExcel.readExcelToMysql("D://ChoiceInfo.XLS");
 			System.out.println(i);
