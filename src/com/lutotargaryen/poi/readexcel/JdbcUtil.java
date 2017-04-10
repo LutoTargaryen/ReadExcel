@@ -3,7 +3,6 @@ package com.lutotargaryen.poi.readexcel;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -26,43 +25,18 @@ public class JdbcUtil implements Serializable{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	//数据库连接驱动
-	private static String DRIVERCLASS;
-	//数据库连接url
-	private static String URL;
-	//数据库连接用户名
-	private static String USERNAME;
-	//数据库连接密码
-	private  static String PASSWROD;
 	
-	static void setDRIVERCLASS(String dRIVERCLASS) {
-		DRIVERCLASS = dRIVERCLASS;
+	private static Connection conn;
+	
+	static void setConnnection(Connection connection){
+		conn = connection;
 	}
-	static void setURL(String uRL) {
-		URL = uRL;
-	}
-	static void setUSERNAME(String uSERNAME) {
-		USERNAME = uSERNAME;
-	}
-	static void setPASSWROD(String pASSWROD) {
-		PASSWROD = pASSWROD;
-	}
+	
 	/**
 	 * 获取数据库连接的方法
 	 */
 	private static Connection getConnection(){
-		Connection connection = null;
-		try {
-			//加载数据库连接驱动
-			Class.forName(DRIVERCLASS);
-			connection = DriverManager.getConnection(URL, USERNAME, PASSWROD);
-			
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return connection;
+		return conn;
 	}
 	/**
 	 * 释放资源方法
@@ -126,7 +100,6 @@ public class JdbcUtil implements Serializable{
 		Connection connection = null;
 		//预编译对象
 		PreparedStatement statement = null;
-		
 		try {
 			//获取连接对象
 			connection = getConnection();
