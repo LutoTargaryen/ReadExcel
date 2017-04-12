@@ -21,10 +21,16 @@ public class DateUtil implements Serializable{
 			pattern = "yyyy年MM月dd";
 		}else if(str.contains("/")){
 			pattern = "yyyy/MM/dd";
+		}else{
+			throw new ParseException("日期格式错误", 0);
 		}
 		SimpleDateFormat sdf = new SimpleDateFormat(pattern);
 		date = sdf.parse(str);
 		return date;
+	}
+	static String DateToString(Date date){
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MM月dd hh:mm:ss");
+		return sdf.format(date);
 	}
 	
 }

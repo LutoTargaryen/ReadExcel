@@ -2,11 +2,16 @@ package com.lutotargaryen.poi.readexcel;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.io.Serializable;
+import java.io.Writer;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -52,6 +57,9 @@ public class ReadExcel implements Serializable{
 	 */
 	public static final int SUCCESS = 1;
 	
+	//保存日志的文件路径
+	private static File file = getFile(); 
+	
 	//文件类型
 	private String fileType;
 	//文件名
@@ -66,6 +74,7 @@ public class ReadExcel implements Serializable{
 	private boolean isExist;
 	//列名与其数据类型的集合
 	private Map<String,String> filedType = new HashMap<>();
+	
 	
 
 	// 使用volatile关键字保证多线程访问时readExcel的可见性
@@ -92,13 +101,32 @@ public class ReadExcel implements Serializable{
 		return readExcel;
 	}
 	
+	private static File getFile() {
+		File file = null;
+		try {
+			File dir = new File("");
+			String s = dir.getCanonicalPath();
+			dir = new File(s+"/file");
+	    	file = new File(dir + "/readexcel.log");
+	    	if(!dir.exists()){
+	    		dir.mkdirs();
+	    	}
+	    	if(!file.exists()){
+	    		file.createNewFile();
+	    	}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return file;
+	}
+
 	/**
 	 * 导入excel中的数据到mysql数据库中
 	 * @param path	excel表路径
 	 * @return
-	 * @throws IOException 
+	 * @throws Exception 
 	 */
-	public int readExcelToMysql(String path) throws IOException{
+	public int readExcelToMysql(String path) throws Exception{
 		//判断路径是否为空
 		if(path == null || path.trim().equals("")){
 			return INVALIDFILEPATH;
@@ -163,14 +191,14 @@ public class ReadExcel implements Serializable{
 						try {
 							r = getRow(sheet,i,sheet.getRow(0).getLastCellNum());
 						} catch (Exception e) {
-							//数据类型不对
-							return DATATYPEERROR;
+				            //数据类型错误
+							e.printStackTrace();
+				            return DATATYPEERROR;
 						}
 						list.add(r);
 					}
 					
 					int res = JdbcUtil.executeUpdate(sql.toString(), list);
-					System.out.println(res == sheet.getLastRowNum());
 					if(res == sheet.getLastRowNum()){
 						//导入成功
 						return SUCCESS;
@@ -208,19 +236,51 @@ public class ReadExcel implements Serializable{
 			Object field = null;
 			//根据类型转换为相应的类型
 			if(fType.equalsIgnoreCase("int")){
-				Double d = Double.valueOf(r.getCell(j).toString());
-				if(d * 10 > d.intValue() * 10){
-					throw new Exception();
+				try {
+					Double d = Double.valueOf(r.getCell(j).toString());
+					if(d * 10 > d.intValue() * 10){
+						throw new NumberFormatException("For input string: \"" + r.getCell(j).toString() + "\"");
+					}
+					field = d.intValue();
+				} catch (Exception e) {
+			        StringBuffer s = new StringBuffer(cell.toString() + "列的数据应为："+fType+"类型，实际输入数据为：");
+			        s.append(r.getCell(j).toString());
+			        WriteException((s.toString()+"\r\n"));
+			        e.printStackTrace();
+			        throw e;
 				}
-				field = d.intValue();
 			}else if(fType.equalsIgnoreCase("double") ){
-				Double d = Double.valueOf(r.getCell(j).toString());
-				field =d;
+				try {
+					Double d = Double.valueOf(r.getCell(j).toString());
+					field = d;
+				} catch (Exception e) {
+					StringBuffer s = new StringBuffer(cell.toString() + "列的数据应为："+fType+"类型，实际输入数据为：");
+			        s.append(r.getCell(j).toString());
+			        WriteException((s.toString()+"\r\n"));
+			        e.printStackTrace();
+			        throw e;
+				}
 			}else if(fType.equalsIgnoreCase("float")){
-				Double d = Double.valueOf(r.getCell(j).toString());
-				field =d.floatValue();
+				try {
+					Double d = Double.valueOf(r.getCell(j).toString());
+					field = d.floatValue();
+				} catch (Exception e) {
+					StringBuffer s = new StringBuffer(cell.toString() + "列的数据应为："+fType+"类型，实际输入数据为：");
+			        s.append(r.getCell(j).toString());
+			        WriteException((s.toString()+"\r\n"));
+			        e.printStackTrace();
+			        throw e;
+				}
 			}else if(fType.equalsIgnoreCase("date")){
-				field = DateUtil.StringToDate(r.getCell(j).toString());
+				try {
+					field = DateUtil.StringToDate(r.getCell(j).toString());
+				} catch (Exception e) {
+					StringBuffer s = new StringBuffer(cell.toString() + "列的数据应为："+fType+"类型，实际输入数据为：");
+			        s.append(r.getCell(j).toString());
+			        WriteException((s.toString()+"\r\n"));
+					e.printStackTrace();
+			        throw e;
+				}
 			}else{
 				field = String.valueOf(r.getCell(j));
 			}
@@ -331,5 +391,43 @@ public class ReadExcel implements Serializable{
 		}
 		return excelFileds;
 	}
+
+    /**
+     * 把异常信息写入日志文件
+     * @param msg
+     * @throws IOException
+     */
+    private void WriteException(String msg) throws IOException{
+    	OutputStreamWriter osw = null;
+    	try{
+    		osw = new OutputStreamWriter(new FileOutputStream(file,true),"utf-8");
+    		String time = DateUtil.DateToString(new Date());
+    		osw.write("时间："+time +" 异常信息：" + msg);
+    	}catch(Exception e){
+    		e.printStackTrace();
+    		throw e;
+    	}finally {
+    		CloseIO(osw);
+    	}
+    }
+    
+    /**
+     * 释放资源
+     * @param object
+     * @throws IOException
+     */
+    private void CloseIO(Object object) throws IOException{
+    	if(object instanceof Writer && object != null){
+    		((Writer) object).flush();
+    		((Writer) object).close();
+    		object = null;
+    		System.out.println("----------已经关闭Writer----------");
+    	}
+    	if(object instanceof Reader && object != null){
+    		((Reader)object).close();
+    		object = null;
+    		System.out.println("----------已经关闭Reader----------");
+    	}
+    }
 }
 

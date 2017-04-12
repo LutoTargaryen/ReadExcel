@@ -74,15 +74,12 @@ public class JdbcUtil implements Serializable{
 	 * 设置参数方法
 	 * @param statement
 	 * @param parameters
+	 * @throws SQLException 
 	 */
-	private static void setParameter(PreparedStatement statement,Object...parameters){
+	private static void setParameter(PreparedStatement statement,Object...parameters) throws SQLException{
 		if(statement != null && parameters != null && parameters.length > 0){
-			try {
-				for(int i = 0;i < parameters.length;i++){
-					statement.setObject(i + 1, parameters[i]);
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
+			for(int i = 0;i < parameters.length;i++){
+				statement.setObject(i + 1, parameters[i]);
 			}
 		}
 	}
@@ -92,8 +89,9 @@ public class JdbcUtil implements Serializable{
 	 * @param sql	sql语句
 	 * @param parameters	sql语句中需要的参数
 	 * @return	SQL 数据操作语言 (DML) 语句的行数
+	 * @throws SQLException 
 	 */
-	static int executeUpdate(String sql,List<Object[]> parameters){
+	static int executeUpdate(String sql,List<Object[]> parameters) throws SQLException{
 		//SQL 数据操作语言 (DML) 语句的行数
 		int row = -1;
 		//创建连接对象
@@ -116,6 +114,7 @@ public class JdbcUtil implements Serializable{
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
+			throw e;
 		} finally {
 			//在finally中释放资源
 			closeObject(statement,connection);
@@ -154,8 +153,9 @@ public class JdbcUtil implements Serializable{
 	 * 获取表中的列
 	 * @param tableName
 	 * @return
+	 * @throws Exception 
 	 */
-	static List<Map<String,Object>> getColumns(String tableName){
+	static List<Map<String,Object>> getColumns(String tableName) throws Exception{
 		//查询的结果列表
 		List<Map<String,Object>> talbe = null;
 		//连接对象
@@ -193,7 +193,7 @@ public class JdbcUtil implements Serializable{
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new Exception();
 		} finally {
 			//在finally中释放资源
 			closeObject(resultSet,connection);
@@ -203,8 +203,9 @@ public class JdbcUtil implements Serializable{
 	/**
 	 * 获取数据库中的所有表名
 	 * @return
+	 * @throws Exception 
 	 */
-	static List<String> getTable(){
+	static List<String> getTable() throws Exception{
 		//查询的结果列表
 		List<String> list = null;
 		//连接对象
@@ -228,7 +229,7 @@ public class JdbcUtil implements Serializable{
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new Exception();
 		} finally {
 			//在finally中释放资源
 			closeObject(resultSet,connection);
