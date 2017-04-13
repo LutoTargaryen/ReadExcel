@@ -1,10 +1,12 @@
 package com.lutotargaryen.poi.readexcel;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Serializable;
@@ -50,8 +52,12 @@ public class ReadExcel implements Serializable{
 	public static final int COLUMNINCONSISTENCY = -3;
 	/**
 	 * 返回状态 excel中数据类型和数据库中的数据类型不一致
-	 */
+	 *//*
 	public static final int DATATYPEERROR = -5;
+	*//**
+	 * 返回状态 主键重复
+	 *//*
+	public static final int PRIMARYEERROR = -6;*/
 	/**
 	 * 返回状态 导入成功
 	 */
@@ -115,7 +121,7 @@ public class ReadExcel implements Serializable{
 	    		file.createNewFile();
 	    	}
 		} catch (IOException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		return file;
 	}
@@ -192,8 +198,8 @@ public class ReadExcel implements Serializable{
 							r = getRow(sheet,i,sheet.getRow(0).getLastCellNum());
 						} catch (Exception e) {
 				            //数据类型错误
-							e.printStackTrace();
-				            return DATATYPEERROR;
+							//e.printStackTrace();
+				            throw e;
 						}
 						list.add(r);
 					}
@@ -210,10 +216,11 @@ public class ReadExcel implements Serializable{
 							primarys.stream().forEach((i) ->{
 								sPrimary.append(i+"列 ");
 							});
-							sPrimary.append("是主键，请该列的数据是否重复");
+							sPrimary.append("的数据具有不可重复性，请该列的数据是否重复\n");
 							WriteException(sPrimary.toString());
+							
 						}
-						e.printStackTrace();
+						//e.printStackTrace();
 						throw e;
 					}
 					if(res == sheet.getLastRowNum()){
@@ -231,6 +238,39 @@ public class ReadExcel implements Serializable{
 		}
 		return 0;
 	}
+	
+	/**
+	 * 获取日志文件中的所以日志
+	 * @return
+	 * @throws IOException
+	 */
+	public List<String> getLogs() throws IOException{
+		InputStreamReader is = new InputStreamReader(new FileInputStream(file));
+		BufferedReader reader = new BufferedReader(is);
+		List<String> logs = new ArrayList<>();
+		try {
+			String s = null;
+			while((s = reader.readLine()) != null){
+				logs.add(s);
+			}
+		} catch (IOException e) {
+			//e.printStackTrace();
+			throw e;
+		} finally {
+			CloseIO(reader);
+		}
+		return logs;
+	}
+	/**
+	 * 获取最新的日志
+	 * @return
+	 * @throws IOException 
+	 */
+	public String getNewLog() throws IOException{
+		List<String> logs = getLogs();
+		return logs.get(0);
+	}
+	
 	/**
 	 * 获取每一行的数据
 	 * @param sheet	
@@ -263,7 +303,7 @@ public class ReadExcel implements Serializable{
 			        StringBuffer s = new StringBuffer(cell.toString() + "列的数据应为："+fType+"类型，实际输入数据为：");
 			        s.append(r.getCell(j).toString());
 			        WriteException((s.toString()+"\r\n"));
-			        e.printStackTrace();
+			       // e.printStackTrace();
 			        throw e;
 				}
 			}else if(fType.equalsIgnoreCase("double") ){
@@ -274,7 +314,7 @@ public class ReadExcel implements Serializable{
 					StringBuffer s = new StringBuffer(cell.toString() + "列的数据应为："+fType+"类型，实际输入数据为：");
 			        s.append(r.getCell(j).toString());
 			        WriteException((s.toString()+"\r\n"));
-			        e.printStackTrace();
+			        //e.printStackTrace();
 			        throw e;
 				}
 			}else if(fType.equalsIgnoreCase("float")){
@@ -285,7 +325,7 @@ public class ReadExcel implements Serializable{
 					StringBuffer s = new StringBuffer(cell.toString() + "列的数据应为："+fType+"类型，实际输入数据为：");
 			        s.append(r.getCell(j).toString());
 			        WriteException((s.toString()+"\r\n"));
-			        e.printStackTrace();
+			        //e.printStackTrace();
 			        throw e;
 				}
 			}else if(fType.equalsIgnoreCase("date")){
@@ -295,7 +335,7 @@ public class ReadExcel implements Serializable{
 					StringBuffer s = new StringBuffer(cell.toString() + "列的数据应为："+fType+"类型，实际输入数据为：");
 			        s.append(r.getCell(j).toString());
 			        WriteException((s.toString()+"\r\n"));
-					e.printStackTrace();
+					//e.printStackTrace();
 			        throw e;
 				}
 			}else{
@@ -421,7 +461,7 @@ public class ReadExcel implements Serializable{
     		String time = DateUtil.DateToString(new Date());
     		osw.write("时间："+time +" 异常信息：" + msg);
     	}catch(Exception e){
-    		e.printStackTrace();
+    		//e.printStackTrace();
     		throw e;
     	}finally {
     		CloseIO(osw);

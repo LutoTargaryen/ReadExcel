@@ -113,7 +113,7 @@ public class JdbcUtil implements Serializable{
 			row = statement.executeBatch().length;
 			
 		} catch (SQLException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 			throw e;
 		} finally {
 			//在finally中释放资源
@@ -155,7 +155,7 @@ public class JdbcUtil implements Serializable{
 	 * @return
 	 * @throws Exception 
 	 */
-	static List<Map<String,Object>> getColumns(String tableName) throws Exception{
+	static List<Map<String,Object>> getColumns(String tableName) throws SQLException{
 		//查询的结果列表
 		List<Map<String,Object>> talbe = null;
 		//连接对象
@@ -192,8 +192,8 @@ public class JdbcUtil implements Serializable{
 					talbe.add(row);
 				}
 			}
-		} catch (Exception e) {
-			throw new Exception();
+		} catch (SQLException e) {
+			throw e;
 		} finally {
 			//在finally中释放资源
 			closeObject(resultSet,connection);
@@ -203,9 +203,10 @@ public class JdbcUtil implements Serializable{
 	/**
 	 * 获取数据库中的所有表名
 	 * @return
+	 * @throws SQLException 
 	 * @throws Exception 
 	 */
-	static List<String> getTable() throws Exception{
+	static List<String> getTable() throws SQLException{
 		//查询的结果列表
 		List<String> list = null;
 		//连接对象
@@ -228,8 +229,8 @@ public class JdbcUtil implements Serializable{
 					list.add(columnValue);
 				}
 			}
-		} catch (Exception e) {
-			throw new Exception();
+		} catch (SQLException e) {
+			throw e;
 		} finally {
 			//在finally中释放资源
 			closeObject(resultSet,connection);
@@ -243,7 +244,7 @@ public class JdbcUtil implements Serializable{
 	 * @return
 	 * @throws Exception
 	 */
-	static List<String> getPrimary(String tableName) throws Exception{
+	static List<String> getPrimary(String tableName) throws SQLException{
 		//查询的结果列表
 		List<String> list = null;
 		//连接对象
@@ -266,7 +267,7 @@ public class JdbcUtil implements Serializable{
 					list.add(columnValue);
 				}
 			}
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			e.printStackTrace();
 			throw e;
 		} finally {

@@ -10,25 +10,43 @@ import com.lutotargaryen.poi.readexcel.ReadExcel;
 
 
 public class Test {
-	public static void main(String[] args){
-		try {
-			Class.forName("com.mysql.jdbc.Driver");
-			Connection connection = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/readexcel?userUnicode=true&characterEncoding=UTF-8","root","root");
-			ReadExcel readExcel = ReadExcel.newInstance(connection);
-			int i = readExcel.readExcelToMysql("D://ChoiceInfo.XLS");
+	public static void main(String[] args) {
+	
+			try {
+				Class.forName("com.mysql.jdbc.Driver");
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			Connection connection = null;
+			try {
+				connection = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/readexcel?userUnicode=true&characterEncoding=UTF-8","root","root");
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			ReadExcel readExcel = null;
+			try {
+				readExcel = ReadExcel.newInstance(connection);
+			} catch (RepeatCreateObject e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			int i = 0;
+	
+			try {
+				i = readExcel.readExcelToMysql("D://ChoiceInfo.XLS");
+			} catch (Exception e) {
+				e.printStackTrace();
+				try {
+					System.out.println(readExcel.getLogs());
+					System.out.println("-------");
+					System.out.println(readExcel.getNewLog());
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+			
 			System.out.println(i);
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} catch (RepeatCreateObject e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
 	}
 }
