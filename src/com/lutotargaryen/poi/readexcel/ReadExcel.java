@@ -198,7 +198,24 @@ public class ReadExcel implements Serializable{
 						list.add(r);
 					}
 					
-					int res = JdbcUtil.executeUpdate(sql.toString(), list);
+					int res = -1;
+					try {
+						res = JdbcUtil.executeUpdate(sql.toString(), list);
+					} catch (Exception e) {
+						String s = e.getMessage();
+						//主键有错误导致的异常，如主键重复
+						if(s.contains("PRIMARY")){
+							List<String> primarys = JdbcUtil.getPrimary(this.fileName);
+							StringBuffer sPrimary = new StringBuffer();
+							primarys.stream().forEach((i) ->{
+								sPrimary.append(i+"列 ");
+							});
+							sPrimary.append("是主键，请该列的数据是否重复");
+							WriteException(sPrimary.toString());
+						}
+						e.printStackTrace();
+						throw e;
+					}
 					if(res == sheet.getLastRowNum()){
 						//导入成功
 						return SUCCESS;

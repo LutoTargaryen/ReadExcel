@@ -236,5 +236,44 @@ public class JdbcUtil implements Serializable{
 		}
 		return list;
 	}
+	
+	/**
+	 * 查询主键
+	 * @param tableName
+	 * @return
+	 * @throws Exception
+	 */
+	static List<String> getPrimary(String tableName) throws Exception{
+		//查询的结果列表
+		List<String> list = null;
+		//连接对象
+		Connection connection = null;
+		ResultSet resultSet = null;
+		try {
+			//获取连接
+			connection = getConnection();
+			DatabaseMetaData dbmd = connection.getMetaData();
+			resultSet = dbmd.getPrimaryKeys(null, null, tableName);
+		
+			if(resultSet != null){
+				//实例化talbe
+				list = new ArrayList<>();
+				//将结果集中的类容存储到list列表中
+				//遍历result中的每一行
+				while(resultSet.next()){
+					//获取表名
+					String columnValue = resultSet.getString("COLUMN_NAME");
+					list.add(columnValue);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			//在finally中释放资源
+			closeObject(resultSet,connection);
+		}
+		return list;
+	}
 
 }
